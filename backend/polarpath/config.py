@@ -18,7 +18,12 @@ CACHE_DIR = BACKEND_ROOT / "data" / "cache"
 ARTEFACT_DIR = BACKEND_ROOT / "data" / "artefacts"
 
 for _d in (ASSET_DIR, CACHE_DIR, ARTEFACT_DIR):
-    _d.mkdir(parents=True, exist_ok=True)
+    # A serverless filesystem is read-only. The directories are committed, so
+    # there is nothing to create there and nothing to fail over.
+    try:
+        _d.mkdir(parents=True, exist_ok=True)
+    except OSError:
+        pass
 
 
 @dataclass(frozen=True)

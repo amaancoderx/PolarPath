@@ -5,11 +5,9 @@
     "status": "ready",
     "ready": true,
     "timings": {
-      "sea-ice model": 99.1,
-      "iceberg model": 15.68,
-      "forecast cycle": 12.19,
-      "iceberg trajectories": 1.18,
-      "skill reports": 71.42
+      "forecast cycle": 0.03,
+      "iceberg trajectories": 0.0,
+      "skill reports": 51.7
     },
     "grid": {
       "n_lat": 93,

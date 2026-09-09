@@ -36,15 +36,39 @@ AUDIT_LIMIT = 400
 # --------------------------------------------------------------- signing key
 
 def _load_secret() -> bytes:
-    """Signing key, from the environment if set, otherwise generated once."""
+    """Signing key.
+
+    Order of preference: an explicit ``POLARPATH_SECRET``, then a key file
+    beside the artefacts, then a key derived from the deployment identity.
+
+    The last case exists for read-only hosts such as serverless functions,
+    where nothing can be written and every instance of one deployment has to
+    agree on the key or a token minted by one would be rejected by the next.
+    Deriving it from the immutable deployment id gives that agreement. Set
+    POLARPATH_SECRET in production so sessions survive a redeploy.
+    """
     env = os.environ.get("POLARPATH_SECRET")
     if env:
         return env.encode("utf-8")
+
     path = ARTEFACT_DIR / "session.key"
     if path.exists():
         return path.read_bytes()
+
     key = secrets.token_bytes(32)
-    path.write_bytes(key)
+    try:
+        path.write_bytes(key)
+        return key
+    except OSError:
+        pass
+
+    stable = (
+        os.environ.get("VERCEL_DEPLOYMENT_ID")
+        or os.environ.get("VERCEL_GIT_COMMIT_SHA")
+        or os.environ.get("RENDER_GIT_COMMIT")
+    )
+    if stable:
+        return hashlib.sha256(f"polarpath::{stable}".encode("utf-8")).digest()
     return key
 
 

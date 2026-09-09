@@ -399,10 +399,10 @@ def skill() -> dict:
     return {
         "sea_ice": ENGINE.sea_ice_skill,
         "drift": ENGINE.drift_skill,
-        "sea_ice_backend": ENGINE.forecaster.backend_name,
-        "iceberg_backend": ENGINE.drift.backend_name,
-        "sea_ice_training": ENGINE.forecaster.training_report,
-        "iceberg_training": ENGINE.drift.training_report,
+        "sea_ice_backend": ENGINE.reports.get("sea_ice_backend", ""),
+        "iceberg_backend": ENGINE.reports.get("iceberg_backend", ""),
+        "sea_ice_training": ENGINE.reports.get("sea_ice_training", {}),
+        "iceberg_training": ENGINE.reports.get("iceberg_training", {}),
     }
 
 

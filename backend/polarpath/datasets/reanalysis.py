@@ -24,9 +24,8 @@ from datetime import date, timedelta
 from functools import lru_cache
 
 import numpy as np
-from scipy import ndimage
 
-from ..config import GRID, RANDOM_SEED
+from ..config import ASSET_DIR, GRID, RANDOM_SEED
 from ..geo import EARTH_RADIUS_M, coriolis_parameter, mesh, wrap_lon
 from .ocean_atlas import distance_to_coast_km, land_mask
 
@@ -135,7 +134,22 @@ def wind_10m(d: date) -> tuple[np.ndarray, np.ndarray]:
 
 @lru_cache(maxsize=1)
 def _eddy_streamfunction() -> np.ndarray:
-    """Static mesoscale eddy streamfunction in m^2/s."""
+    """Static mesoscale eddy streamfunction in m^2/s.
+
+    Smoothing the noise field needs SciPy, so the result is precomputed by
+    scripts/build_static.py and read back when it is available.
+    """
+    path = ASSET_DIR / "geography.npz"
+    if path.exists():
+        with np.load(path) as z:
+            if "eddy_psi" in z.files:
+                return z["eddy_psi"].astype(np.float32)
+    return _compute_eddy_streamfunction()
+
+
+def _compute_eddy_streamfunction() -> np.ndarray:
+    from scipy import ndimage
+
     rng = np.random.default_rng(RANDOM_SEED + 11)
     noise = rng.standard_normal((GRID.n_lat, GRID.n_lon))
     tiled = np.concatenate([noise, noise, noise], axis=1)

@@ -15,6 +15,7 @@ Forecast the ice. Track the icebergs. Plan the passage.
 [![Python](https://img.shields.io/badge/Python-3.11+-3776ab?style=flat-square&logo=python&logoColor=white)](https://python.org)
 [![React](https://img.shields.io/badge/React-18-61dafb?style=flat-square&logo=react&logoColor=white)](https://react.dev)
 [![Offline](https://img.shields.io/badge/Runs-fully_offline-a16207?style=flat-square)](#quick-start)
+[![Deploy](https://img.shields.io/badge/Deploy-Vercel-000000?style=flat-square&logo=vercel)](#deploying)
 
 Built by **Team PolarPath** for Smart India Hackathon 2026
 
@@ -29,7 +30,8 @@ Built by **Team PolarPath** for Smart India Hackathon 2026
 | [The problem](#the-problem) | [What it does](#what-it-does) | [Quick start](#quick-start) |
 | [Signing in](#signing-in) | [How it works](#how-it-works) | [Results](#results) |
 | [The voyage benchmark](#the-voyage-benchmark) | [Interface](#interface) | [Repository layout](#repository-layout) |
-| [Technology](#technology) | [API](#api) | [Scope](#scope-and-what-we-are-not-claiming) |
+| [Technology](#technology) | [API](#api) | [Deploying](#deploying) |
+| [Scope](#scope-and-what-we-are-not-claiming) | | |
 | [Team](#team) | [References](#references) | [Licence](#licence) |
 
 ---
@@ -471,6 +473,67 @@ Raster layers are returned as base64 unsigned bytes with an explicit value range
 JSON numbers. A single concentration field is 33,480 values: as JSON that is roughly half a
 megabyte, as bytes it is 33 kB, which is the difference between a timeline that scrubs smoothly and
 one that stutters.
+
+---
+
+## Deploying
+
+The repository deploys to Vercel as one project: the Vite build is served as
+static files and the FastAPI application runs as a Python function behind
+`/api`.
+
+That is possible because **build time and run time have different
+dependencies**. Training the models and deriving the static geography needs
+SciPy, scikit-learn, XGBoost and matplotlib. Serving needs none of them: every
+field the API reads is a cached artefact committed to the repository, and the
+router is NumPy and a heap. So `requirements.txt` at the root carries only
+FastAPI, Pydantic and NumPy, which is what keeps the function inside the
+serverless size limit, and `backend/requirements.txt` carries the full stack for
+local work.
+
+A test asserts the separation holds: after a full pass over every endpoint, none
+of `scipy`, `sklearn`, `xgboost`, `matplotlib`, `joblib` or `pandas` appears in
+`sys.modules`.
+
+### Steps
+
+1. Import the repository at [vercel.com/new](https://vercel.com/new).
+2. Leave the framework preset as **Other**. `vercel.json` already carries the
+   build command, the output directory, the function configuration and the
+   single-page rewrites.
+3. Add one environment variable:
+
+   | Name | Value |
+   | :-- | :-- |
+   | `POLARPATH_SECRET` | any long random string |
+
+   This is the key that signs session tokens. Without it the application derives
+   one from the deployment id, which works but invalidates every session on each
+   redeploy.
+4. Deploy.
+
+### What is committed so the deployment does not have to build it
+
+| Artefact | Size | Purpose |
+| :-- | --: | :-- |
+| `polarpath/assets/southern_land.json` | 45 kB | Clipped Natural Earth coastline |
+| `polarpath/assets/geography.npz` | 142 kB | Land mask, distance to coast, eddy streamfunction |
+| `data/cache/forecast_*.npz` | 685 kB | The fourteen day forecast cycle |
+| `data/cache/berg_tracks_*.json` | 123 kB | Predicted iceberg trajectories |
+| `data/cache/skill_*.json` | 3 kB | Validation scores and training provenance |
+
+To regenerate them after changing a model:
+
+```bash
+python backend/scripts/build_static.py   # land mask, distance transform, eddy field
+python backend/scripts/train.py          # models, forecast cycle, skill report
+```
+
+### A note on the free tier
+
+Serverless functions are ephemeral. A cold start reloads the cached fields,
+which takes under a second, but the platform itself may take a few seconds to
+wake. Open the deployment a minute or two before demonstrating it.
 
 ---
 

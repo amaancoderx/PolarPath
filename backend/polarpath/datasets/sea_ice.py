@@ -22,7 +22,6 @@ from datetime import date, timedelta
 from functools import lru_cache
 
 import numpy as np
-from scipy import ndimage
 
 from ..config import CACHE_DIR, GRID, RANDOM_SEED
 from ..geo import EARTH_RADIUS_M, axes, mesh, wrap_lon
@@ -173,6 +172,8 @@ def _cell_size_m() -> tuple[np.ndarray, float]:
 
 def advect(field: np.ndarray, u: np.ndarray, v: np.ndarray, dt_s: float) -> np.ndarray:
     """Semi-Lagrangian advection, cyclic in longitude and clamped in latitude."""
+    from scipy import ndimage
+
     dx, dy = _cell_size_m()
     n_lat, n_lon = field.shape
     ii, jj = np.meshgrid(np.arange(n_lat), np.arange(n_lon), indexing="ij")
@@ -187,6 +188,8 @@ def advect(field: np.ndarray, u: np.ndarray, v: np.ndarray, dt_s: float) -> np.n
 
 def _forcing(day_index: int) -> np.ndarray:
     """Spatially correlated daily anomaly forcing, deterministic in the day index."""
+    from scipy import ndimage
+
     rng = np.random.default_rng(RANDOM_SEED + 7919 * day_index)
     noise = rng.standard_normal((GRID.n_lat, GRID.n_lon))
     tiled = np.concatenate([noise, noise, noise], axis=1)

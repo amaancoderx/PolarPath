@@ -34,8 +34,6 @@ from dataclasses import dataclass
 from datetime import date, timedelta
 
 import numpy as np
-from scipy import ndimage
-from xgboost import XGBRegressor
 
 from ..config import ARTEFACT_DIR, GRID, RANDOM_SEED
 from ..datasets import sea_ice as si
@@ -64,6 +62,8 @@ _EDDY_EPOCH = date(2000, 1, 1)
 
 @lru_cache(maxsize=6)
 def _eddy_block(block: int) -> np.ndarray:
+    from scipy import ndimage
+
     rng = np.random.default_rng(RANDOM_SEED + 977 * block)
     noise = rng.standard_normal((2, GRID.n_lat, GRID.n_lon))
     tiled = np.concatenate([noise, noise, noise], axis=2)
@@ -266,8 +266,8 @@ class IcebergDriftModel:
     backend_name = "Free-drift physics with XGBoost residual correction"
 
     def __init__(self):
-        self.model_u: XGBRegressor | None = None
-        self.model_v: XGBRegressor | None = None
+        self.model_u = None
+        self.model_v = None
         self.training_report: dict | None = None
 
     # ---------------------------------------------------------------- dataset
@@ -335,6 +335,8 @@ class IcebergDriftModel:
 
         start = reference - timedelta(days=days)
         X, du, dv = self.build_tracks(archive, train_bergs, start, days)
+
+        from xgboost import XGBRegressor
 
         common = dict(
             n_estimators=420, max_depth=6, learning_rate=0.06,

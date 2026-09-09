@@ -10,8 +10,6 @@ import json
 from functools import lru_cache
 
 import numpy as np
-from matplotlib.path import Path as MplPath
-from scipy import ndimage
 
 from ..config import ASSET_DIR, GRID
 from ..geo import axes, mesh
@@ -33,9 +31,37 @@ def coastline_payload() -> dict:
     return json.loads((ASSET_DIR / "southern_land.json").read_text(encoding="utf-8"))
 
 
+def _static_path():
+    """Precomputed geography, written by scripts/build_static.py.
+
+    Deriving the land mask and the distance transform needs matplotlib and
+    SciPy. Both are build-time dependencies, so the result is written once and
+    the serving path only ever reads it back.
+    """
+    return ASSET_DIR / "geography.npz"
+
+
+@lru_cache(maxsize=1)
+def _static() -> dict | None:
+    path = _static_path()
+    if not path.exists():
+        return None
+    with np.load(path) as z:
+        return {k: z[k] for k in z.files}
+
+
 @lru_cache(maxsize=1)
 def land_mask() -> np.ndarray:
     """Boolean (n_lat, n_lon) mask, True where the grid cell centre is land."""
+    cached = _static()
+    if cached is not None:
+        return cached["land"].astype(bool)
+    return _compute_land_mask()
+
+
+def _compute_land_mask() -> np.ndarray:
+    from matplotlib.path import Path as MplPath
+
     lat2d, lon2d = mesh()
     points = np.column_stack([lon2d.ravel(), lat2d.ravel()])
     mask = np.zeros(points.shape[0], dtype=bool)
@@ -62,11 +88,18 @@ def ocean_mask() -> np.ndarray:
 
 @lru_cache(maxsize=1)
 def distance_to_coast_km() -> np.ndarray:
-    """Distance from every ocean cell to the nearest land cell, kilometres.
+    """Distance from every ocean cell to the nearest land cell, kilometres."""
+    cached = _static()
+    if cached is not None:
+        return cached["coast_km"].astype(np.float32)
+    return _compute_distance_to_coast()
 
-    The transform is run on a longitudinally tiled copy so the antimeridian is
-    handled without a seam.
-    """
+
+def _compute_distance_to_coast() -> np.ndarray:
+    """The transform runs on a longitudinally tiled copy so the antimeridian is
+    handled without a seam."""
+    from scipy import ndimage
+
     ocean = ocean_mask()
     tiled = np.concatenate([ocean, ocean, ocean], axis=1)
     dist = ndimage.distance_transform_edt(tiled, sampling=(_LAT_KM, _LON_KM))

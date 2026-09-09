@@ -28,8 +28,6 @@ from dataclasses import dataclass
 from datetime import date, timedelta
 
 import numpy as np
-from scipy import ndimage
-from sklearn.ensemble import HistGradientBoostingRegressor
 
 from ..config import ARTEFACT_DIR, FORECAST_HORIZON, GRID, INPUT_WINDOW, RANDOM_SEED
 from ..datasets import sea_ice as si
@@ -41,6 +39,7 @@ from ..datasets.reanalysis import (
     wind_10m,
 )
 from ..geo import cell_area_km2, mesh
+from ..products import Forecast
 
 TRAIN_LEADS = (1, 2, 3, 5, 7, 10, 14)
 LAGS = (0, 1, 2, 3, 5, 6)
@@ -64,6 +63,8 @@ FEATURE_NAMES = [
 
 def _neighbourhood(field: np.ndarray):
     """Local mean, gradients and roughness of a cyclic field."""
+    from scipy import ndimage
+
     tiled = np.concatenate([field, field, field], axis=1)
     m3 = ndimage.uniform_filter(tiled, size=3, mode="nearest")
     m7 = ndimage.uniform_filter(tiled, size=7, mode="nearest")
@@ -172,22 +173,13 @@ class FrameBuilder:
 
 # ---------------------------------------------------------------------- model
 
-@dataclass
-class Forecast:
-    init: date
-    lead: int
-    valid: date
-    concentration: np.ndarray
-    thickness: np.ndarray
-
-
 class SeaIceForecaster:
     """Direct multi-horizon residual forecaster."""
 
     backend_name = "Gradient-boosted spatio-temporal residual"
 
     def __init__(self):
-        self.model: HistGradientBoostingRegressor | None = None
+        self.model = None
         self.training_report: dict | None = None
 
     # ------------------------------------------------------------------ train
@@ -225,6 +217,8 @@ class SeaIceForecaster:
         y = np.concatenate(rows_y)
         rows_x.clear()
         rows_y.clear()
+
+        from sklearn.ensemble import HistGradientBoostingRegressor
 
         self.model = HistGradientBoostingRegressor(
             loss="squared_error",

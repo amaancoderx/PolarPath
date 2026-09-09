@@ -1,0 +1,11 @@
+# Runtime dependencies only.
+#
+# Serving PolarPath needs NumPy and a web framework and nothing else: every
+# field the API reads is a cached artefact, and the router is NumPy and a heap.
+# SciPy, scikit-learn, XGBoost and matplotlib are build-time dependencies used
+# by scripts/train.py and scripts/build_static.py. They live in
+# backend/requirements.txt and are deliberately absent here, which is what keeps
+# the deployed function inside a serverless size limit.
+fastapi>=0.115
+pydantic>=2.10
+numpy>=2.0

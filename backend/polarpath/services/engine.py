@@ -21,10 +21,26 @@ from ..config import (
     REFERENCE_DATE,
 )
 from ..datasets import fleet, icebergs, stations
-from ..datasets.sea_ice import get_archive
 from ..models import routing as rt
-from ..models.iceberg_drift import IcebergDriftModel, states_from_catalogue
-from ..models.sea_ice_forecast import Forecast, SeaIceForecaster
+from ..products import Forecast
+
+
+def _require_build_tools(stage: str) -> None:
+    """Fail loudly if a serving process is asked to rebuild an artefact.
+
+    The artefacts are committed, so this only fires when they are missing.
+    Silently starting a multi-minute rebuild inside a request would look like a
+    hang, and on a serverless host it would simply time out.
+    """
+    try:
+        import scipy  # noqa: F401
+        import sklearn  # noqa: F401
+    except ImportError as exc:
+        raise RuntimeError(
+            f"{stage} is not cached and this process cannot rebuild it ({exc}). "
+            f"Run 'python backend/scripts/train.py' locally and commit the "
+            f"contents of backend/data/."
+        ) from exc
 
 
 class Engine:
@@ -39,12 +55,13 @@ class Engine:
         self._lock = threading.Lock()
 
         self._archive = None
-        self.forecaster = SeaIceForecaster()
-        self.drift = IcebergDriftModel()
+        self._forecaster = None
+        self._drift = None
         self.forecasts: list[Forecast] = []
         self.berg_tracks: list[dict] = []
         self.sea_ice_skill: dict = {}
         self.drift_skill: dict = {}
+        self.reports: dict = {}
 
     # ------------------------------------------------------------------- warm
 
@@ -52,9 +69,11 @@ class Engine:
         with self._lock:
             if self.ready:
                 return
+            # Ordered so a process with every artefact on disk never has to
+            # deserialise a model it will not call. Unpickling the boosters
+            # would pull in scikit-learn and XGBoost, which is exactly the
+            # weight the serving path is trying to avoid carrying.
             steps = [
-                ("sea-ice model", self._load_forecaster),
-                ("iceberg model", self._load_drift),
                 ("forecast cycle", self._load_forecasts),
                 ("iceberg trajectories", self._load_tracks),
                 ("skill reports", self._load_skill),
@@ -69,6 +88,24 @@ class Engine:
             self.status = "ready"
             self.ready = True
 
+    # Training pulls in SciPy, scikit-learn and XGBoost. Serving does not, so
+    # a model object is constructed only when a stage actually needs one.
+    @property
+    def forecaster(self):
+        if self._forecaster is None:
+            from ..models.sea_ice_forecast import SeaIceForecaster
+
+            self._forecaster = SeaIceForecaster()
+        return self._forecaster
+
+    @property
+    def drift(self):
+        if self._drift is None:
+            from ..models.iceberg_drift import IcebergDriftModel
+
+            self._drift = IcebergDriftModel()
+        return self._drift
+
     @property
     def archive(self):
         """The observed archive, built only if a stage actually needs it.
@@ -78,18 +115,22 @@ class Engine:
         well under a couple of hundred megabytes.
         """
         if self._archive is None:
+            from ..datasets.sea_ice import get_archive
+
             self._archive = get_archive(self.reference)
         return self._archive
 
-    def _load_forecaster(self, verbose: bool) -> None:
+    def _ensure_forecaster(self, verbose: bool = True):
         if not self.forecaster.load():
             self.forecaster.fit(self.archive, verbose=verbose)
             self.forecaster.save()
+        return self.forecaster
 
-    def _load_drift(self, verbose: bool) -> None:
+    def _ensure_drift(self, verbose: bool = True):
         if not self.drift.load():
             self.drift.fit(self.archive, self.reference, verbose=verbose)
             self.drift.save()
+        return self.drift
 
     def _forecast_cache(self):
         return CACHE_DIR / f"forecast_{self.reference.isoformat()}_{self.horizon}.npz"
@@ -105,6 +146,8 @@ class Engine:
                 for lead in range(sic.shape[0])
             ]
             return
+        _require_build_tools("forecast cycle")
+        self._ensure_forecaster(verbose)
         self.forecasts = self.forecaster.run(self.archive, self.reference, self.horizon)
         np.savez_compressed(
             path,
@@ -120,6 +163,10 @@ class Engine:
         if path.exists():
             self.berg_tracks = json.loads(path.read_text(encoding="utf-8"))
             return
+        _require_build_tools("iceberg trajectories")
+        from ..models.iceberg_drift import states_from_catalogue
+
+        self._ensure_drift(verbose)
         bergs = states_from_catalogue(icebergs.catalogue())
         self.berg_tracks = self.drift.forecast(
             self.archive, bergs, self.reference, self.horizon, corrected=True
@@ -135,11 +182,26 @@ class Engine:
             blob = json.loads(path.read_text(encoding="utf-8"))
             self.sea_ice_skill = blob["sea_ice"]
             self.drift_skill = blob["drift"]
+            self.reports = blob.get("reports", {})
             return
-        self.sea_ice_skill = self.forecaster.validate(self.archive)
-        self.drift_skill = self.drift.validate(self.archive, self.reference)
-        path.write_text(json.dumps({"sea_ice": self.sea_ice_skill, "drift": self.drift_skill}),
-                        encoding="utf-8")
+        _require_build_tools("skill report")
+        forecaster = self._ensure_forecaster(verbose)
+        drift = self._ensure_drift(verbose)
+        self.sea_ice_skill = forecaster.validate(self.archive)
+        self.drift_skill = drift.validate(self.archive, self.reference)
+        # The training provenance is written alongside the scores so a serving
+        # process can report how the models were fitted without loading them.
+        self.reports = {
+            "sea_ice_backend": forecaster.backend_name,
+            "iceberg_backend": drift.backend_name,
+            "sea_ice_training": forecaster.training_report,
+            "iceberg_training": drift.training_report,
+        }
+        path.write_text(json.dumps({
+            "sea_ice": self.sea_ice_skill,
+            "drift": self.drift_skill,
+            "reports": self.reports,
+        }), encoding="utf-8")
 
     # -------------------------------------------------------------- products
 
@@ -203,10 +265,10 @@ class Engine:
                      "lat_min": GRID.lat_min, "lat_max": GRID.lat_max,
                      "lon_min": GRID.lon_min, "lon_max": GRID.lon_max,
                      "lat_step": GRID.lat_step, "lon_step": GRID.lon_step},
-            "sea_ice_backend": self.forecaster.backend_name,
-            "iceberg_backend": self.drift.backend_name,
-            "sea_ice_training": self.forecaster.training_report,
-            "iceberg_training": self.drift.training_report,
+            "sea_ice_backend": self.reports.get("sea_ice_backend", ""),
+            "iceberg_backend": self.reports.get("iceberg_backend", ""),
+            "sea_ice_training": self.reports.get("sea_ice_training", {}),
+            "iceberg_training": self.reports.get("iceberg_training", {}),
             "tracked_bergs": len(self.berg_tracks),
             "ice_extent_km2": self.ice_extent_km2,
             "mean_concentration": round(
