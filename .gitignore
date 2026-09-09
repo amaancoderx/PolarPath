@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Node
+node_modules/
+frontend/dist/
+
+# Secrets. The signing key is generated on first run and must never be shared.
+backend/data/artefacts/session.key
+
+# Editors and OS
+.DS_Store
+.idea/
+.vscode/
+Thumbs.db
+
+# Scratch
+_t*.py
+*.log
+frontend/tsconfig.tsbuildinfo

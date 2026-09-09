@@ -1,0 +1,129 @@
+/*
+ * PolarPath design tokens.
+ *
+ * A single dark chrome sized for a ship's bridge and for a projector: high
+ * contrast type, restrained colour, and one accent that only ever marks
+ * something interactive. Every dimension is a multiple of 4.
+ */
+
+:root {
+  /* Surfaces, from the page ground upwards */
+  --bg: #08090d;
+  --surface: #0e1015;
+  --surface-raised: #14171f;
+  --surface-hover: #191d26;
+  --surface-sunken: #0a0c11;
+
+  /* Lines */
+  --line: rgba(255, 255, 255, 0.07);
+  --line-strong: rgba(255, 255, 255, 0.13);
+  --line-faint: rgba(255, 255, 255, 0.04);
+
+  /* Type */
+  --text: #e9ecf2;
+  --text-2: rgba(233, 236, 242, 0.64);
+  --text-3: rgba(233, 236, 242, 0.4);
+  --text-4: rgba(233, 236, 242, 0.26);
+
+  /* Accent and status */
+  --accent: #7da6ff;
+  --accent-soft: rgba(125, 166, 255, 0.14);
+  --accent-line: rgba(125, 166, 255, 0.34);
+  --good: #4fd1a5;
+  --warn: #f0b429;
+  --bad: #ff6b6b;
+  --info: #b48cff;
+
+  /* Route identities, reused by chart, table and legend */
+  --route-safe: #4fd1a5;
+  --route-balanced: #f0b429;
+  --route-fuel: #ff7a66;
+  --route-alt: rgba(233, 236, 242, 0.34);
+  --route-reported: #8892a6;
+
+  /* Radii */
+  --r-xs: 4px;
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-pill: 999px;
+
+  /* Elevation: a hairline ring plus a soft drop, never a heavy shadow */
+  --ring: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  --elev-1: 0 1px 2px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  --elev-2: 0 8px 24px -8px rgba(0, 0, 0, 0.7), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  --elev-3: 0 24px 60px -16px rgba(0, 0, 0, 0.85), inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+
+  /* Motion */
+  --ease: cubic-bezier(0.32, 0.72, 0, 1);
+  --fast: 0.14s;
+  --base: 0.2s;
+  --slow: 0.32s;
+
+  /* Type stacks */
+  --sans: "Geist", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "Helvetica Neue", Arial, sans-serif;
+  --mono: "Geist Mono", "JetBrains Mono", "SF Mono", "Cascadia Mono", ui-monospace,
+    "Consolas", monospace;
+
+  /* Layout */
+  --rail-left: 320px;
+  --rail-right: 372px;
+  --topbar: 52px;
+  color-scheme: dark;
+}
+
+/*
+ * Day palette.
+ *
+ * Bridge navigation displays carry day, dusk and night palettes because a
+ * screen tuned for a dark wheelhouse is unreadable in sunlight and one tuned
+ * for daylight destroys night vision. A projector has the same problem. The
+ * chart disc keeps its own dark ocean in both palettes: ice, bergs and routes
+ * are drawn as luminance over water, and inverting that would cost more
+ * legibility than a light chart would buy.
+ */
+:root[data-theme="day"] {
+  --bg: #eceff4;
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --surface-hover: #f2f5f9;
+  --surface-sunken: #f7f9fc;
+
+  --line: rgba(16, 24, 40, 0.1);
+  --line-strong: rgba(16, 24, 40, 0.17);
+  --line-faint: rgba(16, 24, 40, 0.06);
+
+  --text: #101828;
+  --text-2: rgba(16, 24, 40, 0.7);
+  --text-3: rgba(16, 24, 40, 0.52);
+  --text-4: rgba(16, 24, 40, 0.36);
+
+  --accent: #2f6bdb;
+  --accent-soft: rgba(47, 107, 219, 0.1);
+  --accent-line: rgba(47, 107, 219, 0.36);
+  --good: #0f7a52;
+  --warn: #a16207;
+  --bad: #c2333a;
+  --info: #6d3fd1;
+
+  --route-safe: #0f7a52;
+  --route-balanced: #a16207;
+  --route-fuel: #c2410c;
+  --route-alt: rgba(16, 24, 40, 0.4);
+  --route-reported: #667085;
+
+  --ring: inset 0 0 0 1px rgba(16, 24, 40, 0.08);
+  --elev-1: 0 1px 2px rgba(16, 24, 40, 0.06), inset 0 0 0 1px rgba(16, 24, 40, 0.08);
+  --elev-2: 0 8px 24px -10px rgba(16, 24, 40, 0.22), inset 0 0 0 1px rgba(16, 24, 40, 0.1);
+  --elev-3: 0 24px 60px -18px rgba(16, 24, 40, 0.3), inset 0 0 0 1px rgba(16, 24, 40, 0.12);
+
+  color-scheme: light;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

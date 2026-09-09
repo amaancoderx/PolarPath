@@ -1,0 +1,862 @@
+/*
+ * Landing page and sign in.
+ *
+ * These two are the only screens a first-time visitor sees before they know
+ * what the system is, so they carry more air, larger type and a slower rhythm
+ * than the console does. The console is a workspace; this is an explanation.
+ */
+
+.landing {
+  min-height: 100%;
+  background: var(--bg);
+  /* The hero sits behind a chart that deliberately overhangs the viewport, so
+     the page has to be explicit about which axis is allowed to scroll. */
+  overflow-x: hidden;
+}
+
+/* ------------------------------------------------------------------- nav */
+
+.lp-nav {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: color-mix(in srgb, var(--bg) 86%, transparent);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--line);
+}
+
+.lp-nav-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+.lp-nav .brand {
+  text-decoration: none;
+  color: inherit;
+}
+
+.lp-links {
+  display: flex;
+  gap: 24px;
+  margin-left: auto;
+}
+
+.landing a.btn {
+  text-decoration: none;
+}
+
+.lp-links a {
+  color: var(--text-3);
+  text-decoration: none;
+  font-size: 12.5px;
+  font-weight: 500;
+  transition: color var(--fast) var(--ease);
+}
+
+.lp-links a:hover {
+  color: var(--text);
+}
+
+/* The console's primary button fills its rail. Out here buttons size to their
+   own label, so the landing and sign-in screens override the width explicitly
+   at a specificity that survives the import order. */
+.landing .btn,
+.signin .btn {
+  width: auto;
+  flex: none;
+}
+
+.lp-nav .brand {
+  flex: none;
+}
+
+.lp-links a {
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------------ hero */
+
+.lp-hero {
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid var(--line);
+}
+
+.hero-chart {
+  position: absolute;
+  top: 50%;
+  right: -4%;
+  transform: translateY(-50%);
+  width: min(760px, 56vw);
+  aspect-ratio: 1;
+  pointer-events: none;
+}
+
+.lp-hero-inner {
+  position: relative;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 104px 24px 92px;
+}
+
+/*
+ * Each block of the hero arrives in sequence, which gives the eye an order to
+ * read them in. The keyframes move the element without touching its opacity on
+ * purpose: an entrance that fades in from nothing leaves the page blank if the
+ * animation never runs, and a landing page that can be invisible is worse than
+ * one that is merely static.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  .lp-hero-inner > * {
+    animation: rise 0.66s var(--ease) backwards;
+  }
+  .lp-hero-inner > *:nth-child(1) { animation-delay: 0.02s; }
+  .lp-hero-inner > *:nth-child(2) { animation-delay: 0.1s; }
+  .lp-hero-inner > *:nth-child(3) { animation-delay: 0.18s; }
+  .lp-hero-inner > *:nth-child(4) { animation-delay: 0.26s; }
+  .lp-hero-inner > *:nth-child(5) { animation-delay: 0.34s; }
+  .hero-chart {
+    animation: settle 1.4s var(--ease) backwards;
+  }
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(16px);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes settle {
+  from {
+    transform: translateY(-50%) scale(1.07);
+  }
+  to {
+    transform: translateY(-50%) scale(1);
+  }
+}
+
+.lp-badge {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 5px 11px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 550;
+  letter-spacing: 0.02em;
+}
+
+.lp-hero h1 {
+  margin: 24px 0 0;
+  font-size: clamp(34px, 5.4vw, 64px);
+  line-height: 1.04;
+  letter-spacing: -0.038em;
+  font-weight: 600;
+}
+
+.lp-accent {
+  color: var(--accent);
+}
+
+.lp-lede {
+  margin: 24px 0 0;
+  max-width: 46ch;
+  font-size: clamp(14px, 1.3vw, 16px);
+  line-height: 1.65;
+  color: var(--text-2);
+}
+
+.lp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 32px;
+}
+
+.btn-lg {
+  height: 44px;
+  padding: 0 20px;
+  font-size: 13.5px;
+  border-radius: var(--r-md);
+}
+
+.landing .lp-actions .btn,
+.lp-final-inner .btn {
+  width: auto;
+}
+
+.lp-facts {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  margin: 56px 0 0;
+  max-width: 780px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+.lp-facts > div {
+  background: var(--surface);
+  padding: 16px 18px;
+}
+
+.lp-facts dt {
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-4);
+}
+
+.lp-facts dd {
+  margin: 6px 0 0;
+  font-family: var(--mono);
+  font-size: 22px;
+  letter-spacing: -0.03em;
+  color: var(--text);
+}
+
+/* -------------------------------------------------------------- sections */
+
+.lp-section {
+  padding: 84px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.lp-section-alt {
+  background: var(--surface);
+}
+
+.lp-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.lp-eyebrow {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 14px;
+}
+
+.lp-section h2 {
+  margin: 0;
+  max-width: 24ch;
+  font-size: clamp(23px, 3vw, 34px);
+  line-height: 1.18;
+  letter-spacing: -0.028em;
+  font-weight: 600;
+}
+
+.lp-sub {
+  margin: 16px 0 0;
+  max-width: 62ch;
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--text-2);
+}
+
+.lp-note {
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--text-3);
+  max-width: 66ch;
+}
+
+.lp-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.lp-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.lp-card {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 22px;
+}
+
+.lp-section-alt .lp-card {
+  background: var(--bg);
+}
+
+.lp-section:not(.lp-section-alt) .lp-card {
+  background: var(--surface);
+}
+
+.lp-card h3 {
+  margin: 0 0 8px;
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: -0.012em;
+}
+
+.lp-card p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.68;
+  color: var(--text-2);
+}
+
+.lp-role {
+  display: inline-block;
+  margin-bottom: 10px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+/* --------------------------------------------------------------- stages */
+
+.lp-stages {
+  list-style: none;
+  margin: 32px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+.lp-stages li {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 20px;
+  padding: 26px 24px;
+  background: var(--bg);
+}
+
+.lp-stage-n {
+  font-family: var(--mono);
+  font-size: 26px;
+  letter-spacing: -0.04em;
+  color: var(--accent);
+  opacity: 0.55;
+}
+
+.lp-stages h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.018em;
+}
+
+.lp-stage-plain {
+  margin: 4px 0 10px;
+  font-size: 13.5px;
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.lp-stages p:last-child {
+  margin: 0;
+  max-width: 72ch;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-2);
+}
+
+/* ---------------------------------------------------------------- stats */
+
+.lp-stat {
+  display: flex;
+  flex-direction: column;
+  padding: 22px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+}
+
+.lp-section-alt .lp-stat {
+  background: var(--bg);
+}
+
+.lp-stat-k {
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-4);
+  min-height: 26px;
+}
+
+.lp-stat-v {
+  margin-top: 8px;
+  font-family: var(--mono);
+  font-size: 32px;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: var(--text);
+}
+
+.lp-stat-v small {
+  font-size: 14px;
+  color: var(--text-3);
+  margin-left: 3px;
+}
+
+.lp-stat-n {
+  margin-top: 10px;
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--text-3);
+}
+
+/* ---------------------------------------------------------------- close */
+
+.lp-final {
+  padding: 76px 0;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+
+.lp-final-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  flex-wrap: wrap;
+}
+
+.lp-final h2 {
+  margin: 0;
+  font-size: clamp(21px, 2.6vw, 30px);
+  letter-spacing: -0.028em;
+  font-weight: 600;
+}
+
+.lp-foot {
+  padding: 32px 0 48px;
+}
+
+.lp-foot-inner {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+  font-size: 11.5px;
+  color: var(--text-3);
+  line-height: 1.7;
+}
+
+.lp-foot-inner strong {
+  color: var(--text-2);
+  margin-right: 10px;
+}
+
+.lp-foot-inner > div {
+  max-width: 62ch;
+}
+
+.lp-foot-note {
+  max-width: 40ch;
+}
+
+/* -------------------------------------------------------------- sign in */
+
+.signin {
+  min-height: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  background: var(--bg);
+}
+
+.signin-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 48px clamp(24px, 6vw, 84px);
+  max-width: 620px;
+  width: 100%;
+  margin-left: auto;
+}
+
+.signin-brand {
+  text-decoration: none;
+  color: inherit;
+  margin-bottom: 40px;
+  align-self: flex-start;
+}
+
+.signin h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+
+.signin-sub {
+  margin: 10px 0 30px;
+  font-size: 13px;
+  line-height: 1.68;
+  color: var(--text-2);
+  max-width: 48ch;
+}
+
+.signin form .control {
+  height: 40px;
+  font-size: 13.5px;
+}
+
+.signin .signin-submit {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.signin-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 12px;
+  padding: 10px 12px;
+  border-radius: var(--r-sm);
+  border: 1px solid rgba(255, 107, 107, 0.32);
+  background: rgba(255, 107, 107, 0.08);
+  color: var(--bad);
+  font-size: 12.5px;
+}
+
+.signin-demo {
+  margin-top: 34px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+
+.signin-demo-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.signin-accounts {
+  display: grid;
+  gap: 8px;
+}
+
+.signin-account {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "role pw"
+    "name email";
+  gap: 2px 12px;
+  text-align: left;
+  padding: 11px 13px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease);
+}
+
+.signin-account:hover {
+  border-color: var(--line-strong);
+  background: var(--surface-hover);
+}
+
+.signin-account[aria-pressed="true"] {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+}
+
+.signin-account-role {
+  grid-area: role;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.signin-account-name {
+  grid-area: name;
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+
+.signin-account-email {
+  grid-area: email;
+  font-size: 11px;
+  color: var(--text-3);
+  text-align: right;
+}
+
+.signin-account-pw {
+  grid-area: pw;
+  font-size: 11px;
+  color: var(--accent);
+  text-align: right;
+}
+
+.signin-aside {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 48px clamp(24px, 5vw, 72px);
+  background:
+    radial-gradient(120% 90% at 30% 10%, #101a2c 0%, #0a0f1a 55%, #070a11 100%);
+  border-left: 1px solid var(--line);
+  overflow: hidden;
+}
+
+.signin-aside-inner {
+  max-width: 460px;
+}
+
+.signin-aside blockquote {
+  margin: 26px 0 0;
+  font-size: clamp(20px, 2.4vw, 30px);
+  line-height: 1.28;
+  letter-spacing: -0.028em;
+  font-weight: 500;
+  color: #e9ecf2;
+}
+
+.signin-points {
+  list-style: none;
+  margin: 34px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.signin-points li {
+  position: relative;
+  padding-left: 22px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: rgba(233, 236, 242, 0.66);
+}
+
+.signin-points li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 7px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #4fd1a5;
+}
+
+/* ---------------------------------------------------------- responsive */
+
+@media (max-width: 1080px) {
+  .lp-grid-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .lp-facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .hero-chart {
+    opacity: 0.35;
+    right: -22%;
+  }
+  .signin {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .signin-panel {
+    margin: 0 auto;
+    max-width: 560px;
+  }
+  .signin-aside {
+    display: none;
+  }
+}
+
+@media (max-width: 860px) {
+  .lp-links {
+    display: none;
+  }
+  .lp-grid-3 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .lp-hero-inner {
+    padding: 64px 20px 56px;
+  }
+  .lp-section {
+    padding: 60px 0;
+  }
+  .lp-inner,
+  .lp-nav-inner {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+  .lp-stages li {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+    padding: 22px 20px;
+  }
+  .lp-stage-n {
+    font-size: 20px;
+  }
+  .hero-chart {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .lp-badge {
+    font-size: 10px;
+    padding: 5px 9px;
+    line-height: 1.45;
+  }
+}
+
+@media (max-width: 560px) {
+  .lp-grid-4,
+  .lp-facts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .landing .lp-actions .btn,
+  .landing .lp-final-inner .btn {
+    width: 100%;
+  }
+  .signin-account {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "role"
+      "name"
+      "email"
+      "pw";
+  }
+  .signin-account-email,
+  .signin-account-pw {
+    text-align: left;
+  }
+}
+
+/* ------------------------------------------------- narrow-viewport guards */
+
+/*
+ * On a phone the constraint is the viewport, not the reading measure. These
+ * rules drop the ch-based measures that shape the desktop layout so nothing
+ * can push the page wider than the screen it is being read on.
+ */
+@media (max-width: 900px) {
+  .lp-nav-inner,
+  .lp-hero-inner,
+  .lp-inner {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .lp-nav-inner {
+    gap: 12px;
+  }
+
+  .lp-nav .brand {
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .lp-hero h1,
+  .lp-lede,
+  .lp-sub,
+  .lp-note,
+  .lp-section h2,
+  .lp-stages p:last-child,
+  .lp-foot-inner > div,
+  .lp-foot-note,
+  .signin-sub {
+    max-width: 100%;
+  }
+
+  .lp-facts,
+  .lp-card,
+  .lp-stat,
+  .lp-stages {
+    max-width: 100%;
+  }
+
+  .landing *,
+  .signin * {
+    min-width: 0;
+  }
+}
+
+/* -------------------------------------------------- public palette toggle */
+
+.lp-theme {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 11px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--line-strong);
+  background: transparent;
+  color: var(--text-3);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: color var(--fast) var(--ease), border-color var(--fast) var(--ease);
+}
+
+.lp-theme:hover {
+  color: var(--text);
+  border-color: var(--accent-line);
+}
+
+.signin-theme {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 5;
+}
+
+.signin {
+  position: relative;
+}
+
+/* The sign-in artwork panel is dark in both palettes, in the same way the chart
+   is: it is a picture, not a surface. */
+.lp-credit {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+
+.lp-credit strong {
+  color: var(--text-2);
+  font-weight: 600;
+}
+
+.lp-credit .dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--text-4);
+}
