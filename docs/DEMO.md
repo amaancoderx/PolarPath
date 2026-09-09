@@ -4,6 +4,19 @@ Everything below is produced live by the running system. No figure on any screen
 
 ---
 
+## The live deployment
+
+**https://polarpath-sih.vercel.app**
+
+Use it for the slide and for any judge who wants to open it themselves. Demo
+from localhost, which is faster, keeps the full audit trail and does not depend
+on anyone else's infrastructure at nine in the morning.
+
+If you do present from the live link, open it a minute beforehand: serverless
+functions sleep when idle and the first request pays a wake-up.
+
+---
+
 ## Before you start
 
 ```powershell

@@ -17,6 +17,11 @@ Forecast the ice. Track the icebergs. Plan the passage.
 [![Offline](https://img.shields.io/badge/Runs-fully_offline-a16207?style=flat-square)](#quick-start)
 [![Deploy](https://img.shields.io/badge/Deploy-Vercel-000000?style=flat-square&logo=vercel)](#deploying)
 
+### [Open the live deployment](https://polarpath-sih.vercel.app)
+
+Sign in with `admin@ncpor.gov.in` and `PolarPath@2026`, or use
+[this link](https://polarpath-sih.vercel.app/signin?as=administrator) to go straight in.
+
 Built by **Team PolarPath** for Smart India Hackathon 2026
 
 </div>
@@ -27,12 +32,49 @@ Built by **Team PolarPath** for Smart India Hackathon 2026
 
 | | | |
 | :-- | :-- | :-- |
-| [The problem](#the-problem) | [What it does](#what-it-does) | [Quick start](#quick-start) |
-| [Signing in](#signing-in) | [How it works](#how-it-works) | [Results](#results) |
-| [The voyage benchmark](#the-voyage-benchmark) | [Interface](#interface) | [Repository layout](#repository-layout) |
+| [Live deployment](#live-deployment) | [The problem](#the-problem) | [What it does](#what-it-does) |
+| [Quick start](#quick-start) | [Signing in](#signing-in) | [How it works](#how-it-works) |
+| [Results](#results) | [The voyage benchmark](#the-voyage-benchmark) | [Interface](#interface) |
+| [Repository layout](#repository-layout) | | |
 | [Technology](#technology) | [API](#api) | [Deploying](#deploying) |
 | [Scope](#scope-and-what-we-are-not-claiming) | | |
 | [Team](#team) | [References](#references) | [Licence](#licence) |
+
+---
+
+## Live deployment
+
+**[https://polarpath-sih.vercel.app](https://polarpath-sih.vercel.app)**
+
+The whole system runs there: the forecast cycle, the iceberg trajectories, the
+route optimiser and the audit trail. Nothing is a mock-up and nothing is a
+screenshot.
+
+| Try | Link |
+| :-- | :-- |
+| The public page | [https://polarpath-sih.vercel.app](https://polarpath-sih.vercel.app) |
+| Straight in as the administrator | [https://polarpath-sih.vercel.app/signin?as=administrator](https://polarpath-sih.vercel.app/signin?as=administrator) |
+| Straight in as a vessel master, three views only | [https://polarpath-sih.vercel.app/signin?as=master](https://polarpath-sih.vercel.app/signin?as=master) |
+| Engine health | [https://polarpath-sih.vercel.app/api/health](https://polarpath-sih.vercel.app/api/health) |
+
+Measured against the running deployment rather than a local machine:
+
+| Endpoint | Warm response |
+| :-- | --: |
+| Landing page, sign in, console | under 0.4 s |
+| Raster layer, 33,480 cells | 0.3 s |
+| Route with the full ten-weighting Pareto sweep | 1.3 s |
+| Largest search graph, Cape Town to McMurdo, 10,097 cells | 3.6 s |
+| Voyage benchmark, the heaviest endpoint | 3.1 s |
+
+Serverless functions sleep when idle, so the first request after a quiet period
+pays a wake-up. Open the link a minute before demonstrating it.
+
+One behaviour differs from a local run by design: the audit trail lives in
+memory, so each function instance keeps its own. Everything done in a single
+session is recorded, but the list does not accumulate across instances the way
+it does in one long-lived process. In production that trail belongs in a
+database.
 
 ---
 
@@ -496,6 +538,8 @@ of `scipy`, `sklearn`, `xgboost`, `matplotlib`, `joblib` or `pandas` appears in
 `sys.modules`.
 
 ### Steps
+
+The live deployment above was created exactly this way.
 
 1. Import the repository at [vercel.com/new](https://vercel.com/new).
 2. Leave the framework preset as **Other**. `vercel.json` already carries the
