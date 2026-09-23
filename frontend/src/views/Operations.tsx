@@ -69,9 +69,11 @@ export default function Operations() {
           hoveredRoute={c.hoveredRoute}
           icebergs={c.toggles.icebergs ? c.icebergs : []}
           tracks={c.toggles.tracks ? c.tracks : []}
+          drift={c.drift}
           places={c.places}
           showIcebergs={c.toggles.icebergs}
           showTracks={c.toggles.tracks}
+          showDrift={c.toggles.drift}
           showGraticule={c.toggles.graticule}
           showPlaces={c.toggles.places}
           day={c.day}
@@ -101,6 +103,10 @@ export default function Operations() {
             <button className="toggle" aria-pressed={c.toggles.tracks} onClick={() => c.toggle("tracks")}>
               <span className="box" />
               Berg trajectories
+            </button>
+            <button className="toggle" aria-pressed={c.toggles.drift} onClick={() => c.toggle("drift")}>
+              <span className="box" />
+              Ice drift
             </button>
             <button className="toggle" aria-pressed={c.toggles.places} onClick={() => c.toggle("places")}>
               <span className="box" />

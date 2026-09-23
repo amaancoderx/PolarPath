@@ -5,6 +5,7 @@ import {
   api,
   type Bootstrap,
   type DecodedLayer,
+  type DriftField,
   type IcebergPoint,
   type IcebergTrack,
   type Place,
@@ -34,6 +35,7 @@ const INITIAL_PARAMS = new URLSearchParams(window.location.search);
 export interface Toggles {
   icebergs: boolean;
   tracks: boolean;
+  drift: boolean;
   graticule: boolean;
   places: boolean;
 }
@@ -94,10 +96,16 @@ export function useConsoleState() {
 
   const [toggles, setToggles] = useState<Toggles>({
     icebergs: true,
-    tracks: false,
+    // Trajectories are the point of the iceberg model, so they are on from the
+    // first frame rather than hidden behind a checkbox.
+    tracks: true,
+    drift: true,
     graticule: true,
     places: true,
   });
+
+  const [drift, setDrift] = useState<DriftField | null>(null);
+  const driftCache = useRef(new Map<number, DriftField>());
 
   const layerCache = useRef(new Map<string, DecodedLayer>());
   const bergCache = useRef(new Map<number, IcebergPoint[]>());
@@ -224,6 +232,29 @@ export function useConsoleState() {
     api.icebergTracks(30).then((r) => setTracks(r.tracks)).catch(() => undefined);
   }, [boot, toggles.tracks, tracks.length]);
 
+  // The drift field drives the animated streamlines. One request per forecast
+  // day, then it is cached, because scrubbing the timeline must stay instant.
+  useEffect(() => {
+    if (!boot || !toggles.drift) return;
+    let cancelled = false;
+    const cached = driftCache.current.get(day);
+    if (cached) {
+      setDrift(cached);
+      return;
+    }
+    api
+      .drift(day)
+      .then((field) => {
+        if (cancelled) return;
+        driftCache.current.set(day, field);
+        setDrift(field);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [boot, day, toggles.drift]);
+
   /* ------------------------------------------------------------ routing */
 
   const runPlan = useCallback(async () => {
@@ -312,7 +343,7 @@ export function useConsoleState() {
     originId, setOriginId, destinationId, setDestinationId,
     layerId, setLayerId, layer,
     day, setDay, activeDay, playing, setPlaying,
-    icebergs, tracks,
+    icebergs, tracks, drift,
     plan, planning, planError, runPlan,
     selectedRoute, setSelectedRoute, hoveredRoute, setHoveredRoute, route,
     toggles, toggle,

@@ -247,6 +247,41 @@ def vectors(day: int = Query(0, ge=0), stride: int = Query(5, ge=2, le=12)) -> d
     return {"day": day, "valid": valid.isoformat(), "wind": out_wind, "current": out_current}
 
 
+@router.get("/drift")
+def drift(day: int = Query(0, ge=0), stride: int = Query(3, ge=1, le=8)) -> dict:
+    """Free-drift sea-ice velocity, decimated, for the animated drift overlay.
+
+    This is the same velocity field the forecaster advects the ice with, so
+    what the streamlines show on the chart is the motion the model used, not a
+    decorative flow.
+    """
+    _require_ready()
+    from .datasets.sea_ice import drift_velocity
+
+    valid = ENGINE.forecasts[min(day, ENGINE.horizon)].valid
+    u, v = drift_velocity(valid)
+    ice = ENGINE.forecasts[min(day, ENGINE.horizon)].concentration
+    water = ~land_mask()
+
+    us = np.round(np.where(water, u, 0.0)[::stride, ::stride], 3)
+    vs = np.round(np.where(water, v, 0.0)[::stride, ::stride], 3)
+    sic = np.round(np.where(water, ice, 0.0)[::stride, ::stride], 2)
+    return {
+        "day": day,
+        "valid": valid.isoformat(),
+        "stride": stride,
+        "n_lat": int(us.shape[0]),
+        "n_lon": int(us.shape[1]),
+        "lat_min": GRID.lat_min,
+        "lon_min": GRID.lon_min,
+        "lat_step": GRID.lat_step * stride,
+        "lon_step": GRID.lon_step * stride,
+        "u": us.ravel().tolist(),
+        "v": vs.ravel().tolist(),
+        "sic": sic.ravel().tolist(),
+    }
+
+
 @router.get("/ice-edge")
 def ice_edge(day: int = Query(0, ge=0)) -> dict:
     """The 15 percent contour latitude by longitude, for the edge overlay."""

@@ -97,6 +97,31 @@ export interface DecodedLayer extends Omit<RasterLayer, "data"> {
   bytes: Uint8Array;
 }
 
+/** Free-drift ice velocity on a decimated grid, for the drift overlay. */
+export interface DriftMeta {
+  day: number;
+  valid: string;
+  stride: number;
+  n_lat: number;
+  n_lon: number;
+  lat_min: number;
+  lon_min: number;
+  lat_step: number;
+  lon_step: number;
+}
+
+interface DriftPayload extends DriftMeta {
+  u: number[];
+  v: number[];
+  sic: number[];
+}
+
+export interface DriftField extends DriftMeta {
+  u: Float32Array;
+  v: Float32Array;
+  sic: Float32Array;
+}
+
 export interface ProfilePoint {
   hour: number;
   lat: number;
@@ -316,6 +341,12 @@ export const api = {
     const raw = await get<RasterLayer>(`/layer/${name}?day=${day}&vessel=${vessel}`, signal);
     const { data, ...rest } = raw;
     return { ...rest, bytes: decodeBytes(data) };
+  },
+
+  async drift(day: number, stride = 3): Promise<DriftField> {
+    const raw = await get<DriftPayload>(`/drift?day=${day}&stride=${stride}`);
+    const { u, v, sic, ...meta } = raw;
+    return { ...meta, u: Float32Array.from(u), v: Float32Array.from(v), sic: Float32Array.from(sic) };
   },
 
   icebergs: (day: number) => get<{ day: number; count: number; icebergs: IcebergPoint[] }>(`/icebergs?day=${day}`),

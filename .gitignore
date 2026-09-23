@@ -21,3 +21,6 @@ Thumbs.db
 _t*.py
 *.log
 frontend/tsconfig.tsbuildinfo
+
+# Idea PPT build workspace, not part of the product
+ppt_work/

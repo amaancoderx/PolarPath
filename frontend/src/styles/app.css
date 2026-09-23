@@ -526,6 +526,15 @@ select.control {
   cursor: grabbing;
 }
 
+/* The animated drift and route-flow layer. It carries no interaction of its
+   own, so every pointer event belongs to the chart canvas beneath it. */
+.chart-flow {
+  position: absolute;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+}
+
 .overlay {
   position: absolute;
   pointer-events: none;
